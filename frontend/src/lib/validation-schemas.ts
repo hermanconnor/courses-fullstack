@@ -18,3 +18,11 @@ export const signupSchema = z
   });
 
 export type SignUpFormData = z.infer<typeof signupSchema>;
+
+export const signInSchema = z.object({
+  emailAddress: z.email().min(1, "Email is required").trim(),
+
+  password: z.string().min(1, "Password is required").trim(),
+});
+
+export type SignInFormData = z.infer<typeof signInSchema>;

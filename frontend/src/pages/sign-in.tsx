@@ -10,18 +10,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { signupSchema, type SignUpFormData } from "@/lib/validation-schemas";
 import FormField from "@/components/form/form-field";
+import { signInSchema, type SignInFormData } from "@/lib/validation-schemas";
 
-const SignUp = () => {
+const SignIn = () => {
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SignUpFormData>({ resolver: zodResolver(signupSchema) });
+  } = useForm<SignInFormData>({ resolver: zodResolver(signInSchema) });
 
-  const onSubmit = async (credentials: SignUpFormData) => {
-    console.log(credentials);
+  const onSubmit = async (data: SignInFormData) => {
+    console.log(data);
   };
 
   return (
@@ -31,34 +31,20 @@ const SignUp = () => {
           <BookOpen className="h-12 w-12 text-blue-600" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-          Create your account
+          Sign in to your account
         </h2>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <Card>
           <CardHeader>
-            <CardTitle>Sign Up</CardTitle>
+            <CardTitle>Welcome Back</CardTitle>
             <CardDescription>
-              Fill in your information to create an account
+              Enter your credentials to access your account
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                name="firstName"
-                label="First Name"
-                register={register}
-                error={errors.firstName?.message}
-              />
-
-              <FormField
-                name="lastName"
-                label="Last Name"
-                register={register}
-                error={errors.lastName?.message}
-              />
-
               <FormField
                 type="email"
                 name="emailAddress"
@@ -75,30 +61,22 @@ const SignUp = () => {
                 error={errors.password?.message}
               />
 
-              <FormField
-                type="password"
-                name="confirmPassword"
-                label="Confirm Password"
-                register={register}
-                error={errors.confirmPassword?.message}
-              />
-
               <Button
                 type="submit"
                 className="w-full cursor-pointer"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Creating Account..." : "Create Account"}
+                {isSubmitting ? "Signing In..." : "Sign In"}
               </Button>
             </form>
 
             <p className="mt-4 text-center text-sm text-gray-600">
               Or{" "}
               <Link
-                to="/sign-in"
+                to="/sign-up"
                 className="font-medium text-blue-600 hover:text-blue-500"
               >
-                sign in to your existing account
+                create a new account
               </Link>
             </p>
           </CardContent>
@@ -108,4 +86,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default SignIn;
