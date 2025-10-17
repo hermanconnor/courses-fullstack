@@ -20,6 +20,7 @@ app.get('/users', authenticateUser, async (c) => {
     message: 'Authenticated user fetched successfully',
     data: {
       user: {
+        id: currentUser.id,
         firstName: currentUser.firstName,
         lastName: currentUser.lastName,
         emailAddress: currentUser.emailAddress,

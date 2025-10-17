@@ -5,13 +5,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { InternalAxiosRequestConfig } from "axios";
 import type { AuthSuccessResponse, Credentials, User } from "@/lib/types";
 import type { SignInFormData, SignUpFormData } from "@/lib/validation-schemas";
-import { api, API_BASE_URL } from "@/api/axiosConfig";
+import { api } from "@/api/axiosConfig";
 
 interface AuthContextType {
-  user: User | null;
+  authUser: User | null;
   credentials: Credentials | null;
   signUp: (data: SignUpFormData) => Promise<void>;
   signIn: (creds: SignInFormData) => Promise<void>;
@@ -21,66 +20,73 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [credentials, setCredentials] = useState<Credentials | null>(null);
-
-  useEffect(() => {
-    const initializeAuth = () => {
-      try {
-        const storedCredentials = localStorage.getItem("userCredentials");
-        const storedUser = localStorage.getItem("authUser");
-
-        if (storedCredentials && storedUser) {
-          setCredentials(JSON.parse(storedCredentials));
-          setUser(JSON.parse(storedUser));
-        }
-      } catch (error) {
-        console.error("Failed to load auth data:", error);
-        // Clear potentially corrupted data
-        localStorage.removeItem("userCredentials");
-        localStorage.removeItem("authUser");
-      }
-    };
-
-    initializeAuth();
-  }, []);
-
-  // Setup Axios interceptors whenever token changes
-  useEffect(() => {
-    // Request interceptor to attach Authorization header
-    const requestInterceptor = api.interceptors.request.use(
-      (config: InternalAxiosRequestConfig) => {
-        if (credentials) {
-          const { emailAddress, password } = credentials;
+  api.interceptors.request.use(
+    (config) => {
+      const storedCredentials = localStorage.getItem("userCredentials");
+      if (storedCredentials) {
+        try {
+          const { emailAddress, password } = JSON.parse(storedCredentials);
           const encodedCredentials = btoa(`${emailAddress}:${password}`);
           config.headers["Authorization"] = `Basic ${encodedCredentials}`;
+        } catch (error) {
+          console.error("Failed to parse credentials", error);
         }
+      }
 
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      },
-    );
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    },
+  );
 
-    // Response interceptor to handle authentication errors
-    const responseInterceptor = api.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        // Handle 401 Unauthorized - token expired or invalid
-        if (error.response?.status === 401) {
-          console.warn("Unauthorized - logging out user");
-          signOut();
-        }
-        return Promise.reject(error);
-      },
-    );
+  // Response interceptor to handle authentication errors
+  api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response && error.response.status === 401) {
+        console.warn("Unauthorized request, please sign in.");
+        signOut();
+      }
 
-    // Cleanup: Remove interceptors when component unmounts
-    return () => {
-      api.interceptors.request.eject(requestInterceptor);
-      api.interceptors.response.eject(responseInterceptor);
-    };
+      return Promise.reject(error);
+    },
+  );
+
+  const [authUser, setAuthUser] = useState<User | null>(() => {
+    try {
+      const storedUser = localStorage.getItem("authUser");
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch (error) {
+      console.error("Failed to parse authenticated user", error);
+      return null;
+    }
+  });
+
+  const [credentials, setCredentials] = useState<Credentials | null>(() => {
+    try {
+      const storedCredentials = localStorage.getItem("userCredentials");
+      return storedCredentials ? JSON.parse(storedCredentials) : null;
+    } catch (error) {
+      console.error("Failed to parse user credentials", error);
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (authUser) {
+      localStorage.setItem("authUser", JSON.stringify(authUser));
+    } else {
+      localStorage.removeItem("authUser");
+    }
+  }, [authUser]);
+
+  useEffect(() => {
+    if (credentials) {
+      localStorage.setItem("userCredentials", JSON.stringify(credentials));
+    } else {
+      localStorage.removeItem("userCredentials");
+    }
   }, [credentials]);
 
   const signUp = async (data: SignUpFormData): Promise<void> => {
@@ -90,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const encodedCredentials = btoa(`${emailAddress}:${password}`);
 
       const response = await api.post(
-        `${API_BASE_URL}/users`,
+        "/users",
         { firstName, lastName, emailAddress, password },
         {
           headers: {
@@ -103,54 +109,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const newUser = { ...userData.data.user };
 
       // Update state
-      setUser(newUser);
+      setAuthUser(newUser);
       setCredentials({ emailAddress, password });
-
-      // Persist to localStorage
-      localStorage.setItem("userCredentials", JSON.stringify(credentials));
-      localStorage.setItem("authUser", JSON.stringify(newUser));
     } catch (error) {
       console.error("Signup failed:", error);
+      setAuthUser(null);
+      setCredentials(null);
       throw error;
     }
   };
 
   const signIn = async (creds: SignInFormData): Promise<void> => {
-    try {
-      const { emailAddress, password } = creds;
-      const encodedCredentials = btoa(`${emailAddress}:${password}`);
+    const { emailAddress, password } = creds;
+    const encodedCredentials = btoa(`${emailAddress}:${password}`);
 
-      const response = await api.get(`${API_BASE_URL}/users`, {
+    try {
+      const response = await api.get("/users", {
         headers: {
           Authorization: `Basic ${encodedCredentials}`,
         },
       });
 
+      console.log(response.data);
       const userData: AuthSuccessResponse = response.data;
       const user = { ...userData.data.user };
 
       // Update state
-      setUser(user);
+      setAuthUser(user);
       setCredentials({ emailAddress, password });
-
-      // Persist to localStorage
-      localStorage.setItem("userCredentials", JSON.stringify(credentials));
-      localStorage.setItem("authUser", JSON.stringify(user));
     } catch (error) {
       console.error("Login failed:", error);
+      setAuthUser(null);
+      setCredentials(null);
       throw error;
     }
   };
 
   const signOut = (): void => {
-    setUser(null);
+    setAuthUser(null);
     setCredentials(null);
     localStorage.removeItem("authUser");
     localStorage.removeItem("userCredentials");
   };
 
   const value: AuthContextType = {
-    user,
+    authUser,
     credentials,
     signUp,
     signIn,

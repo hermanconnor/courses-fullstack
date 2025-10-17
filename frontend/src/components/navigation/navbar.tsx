@@ -1,9 +1,14 @@
-import { BookOpen, LogIn } from "lucide-react";
-import { Link, NavLink } from "react-router";
+import { Link, NavLink, useNavigate } from "react-router";
+import { BookOpen, LogIn, LogOut, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import MobileMenu from "@/components/navigation/mobile-menu";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/providers/auth-provider";
 
 const Navbar = () => {
+  const navigate = useNavigate();
+  const { authUser, signOut } = useAuth();
+
   const activeStyles = "bg-blue-50 text-blue-600";
   const baseStyles = "text-gray-700 hover:text-blue-600 hover:bg-gray-50";
   const defaultStyles =
@@ -30,31 +35,69 @@ const Navbar = () => {
             >
               Courses
             </NavLink>
+
+            {authUser && authUser.id ? (
+              <NavLink
+                end
+                to="/courses/create"
+                className={({ isActive }) =>
+                  cn(isActive ? activeStyles : baseStyles, defaultStyles)
+                }
+              >
+                Create Course
+              </NavLink>
+            ) : null}
           </div>
 
           <div className="hidden items-center space-x-4 md:flex">
-            <NavLink
-              to="/sign-in"
-              className={({ isActive }) =>
-                cn(
-                  isActive ? activeStyles : baseStyles,
-                  defaultStyles,
-                  "flex items-center justify-center",
-                )
-              }
-            >
-              <LogIn className="mr-1 size-4" />
-              Sign In
-            </NavLink>
+            {authUser && authUser.id ? (
+              <>
+                <Link to="user-profile">
+                  <Button variant="ghost" size="sm" className="cursor-pointer">
+                    <User className="mr-1 size-4" />
+                    Profile
+                  </Button>
+                </Link>
 
-            <NavLink
-              to="/sign-up"
-              className={({ isActive }) =>
-                cn(isActive ? activeStyles : baseStyles, defaultStyles)
-              }
-            >
-              Sign Up
-            </NavLink>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="cursor-pointer"
+                  onClick={() => {
+                    signOut();
+                    navigate("/sign-in");
+                  }}
+                >
+                  <LogOut className="mr-1 size-4" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <NavLink
+                  to="/sign-in"
+                  className={({ isActive }) =>
+                    cn(
+                      isActive ? activeStyles : baseStyles,
+                      defaultStyles,
+                      "flex items-center justify-center",
+                    )
+                  }
+                >
+                  <LogIn className="mr-1 size-4" />
+                  Sign In
+                </NavLink>
+
+                <NavLink
+                  to="/sign-up"
+                  className={({ isActive }) =>
+                    cn(isActive ? activeStyles : baseStyles, defaultStyles)
+                  }
+                >
+                  Sign Up
+                </NavLink>
+              </>
+            )}
           </div>
 
           {/* MOBILE MENU */}

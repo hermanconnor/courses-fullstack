@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BookOpen } from "lucide-react";
@@ -12,8 +12,13 @@ import {
 } from "@/components/ui/card";
 import FormField from "@/components/form/form-field";
 import { signInSchema, type SignInFormData } from "@/lib/validation-schemas";
+import { useAuth } from "@/providers/auth-provider";
+import { toast } from "sonner";
 
 const SignIn = () => {
+  const navigate = useNavigate();
+  const { signIn } = useAuth();
+
   const {
     register,
     handleSubmit,
@@ -21,7 +26,14 @@ const SignIn = () => {
   } = useForm<SignInFormData>({ resolver: zodResolver(signInSchema) });
 
   const onSubmit = async (data: SignInFormData) => {
-    console.log(data);
+    try {
+      await signIn(data);
+
+      navigate("/");
+    } catch (error) {
+      console.error(error);
+      toast.error("Invalid credentials");
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BookOpen } from "lucide-react";
@@ -12,8 +12,13 @@ import {
 } from "@/components/ui/card";
 import { signupSchema, type SignUpFormData } from "@/lib/validation-schemas";
 import FormField from "@/components/form/form-field";
+import { useAuth } from "@/providers/auth-provider";
+import { toast } from "sonner";
 
 const SignUp = () => {
+  const navigate = useNavigate();
+  const { signUp } = useAuth();
+
   const {
     register,
     handleSubmit,
@@ -21,7 +26,14 @@ const SignUp = () => {
   } = useForm<SignUpFormData>({ resolver: zodResolver(signupSchema) });
 
   const onSubmit = async (credentials: SignUpFormData) => {
-    console.log(credentials);
+    try {
+      await signUp(credentials);
+
+      navigate("/");
+    } catch (error) {
+      console.error(error);
+      toast.error("Signup failed. Email may already be in use.");
+    }
   };
 
   return (

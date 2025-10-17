@@ -11,12 +11,6 @@ export interface Credentials {
   password: string;
 }
 
-// export interface AuthResponse {
-//   success: boolean;
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   errorData?: any;
-// }
-
 export interface AuthSuccessResponse {
   message: string;
   status: string;
