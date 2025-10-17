@@ -18,3 +18,12 @@ export interface AuthSuccessResponse {
     user: User;
   };
 }
+
+export interface Course {
+  id: number;
+  title: string;
+  description: string;
+  estimatedTime?: string;
+  materialsNeeded?: string;
+  userId: number;
+}
