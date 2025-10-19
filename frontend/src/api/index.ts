@@ -1,6 +1,7 @@
 import type { Course, User } from "@/lib/types";
 import { api } from "./axiosConfig";
 import { AxiosError, isAxiosError } from "axios";
+// import type { CourseFormData } from "@/lib/validation-schemas";
 
 interface ApiResponse<T> {
   data: T;
@@ -19,6 +20,11 @@ export const getCourses = async () => {
   try {
     const response =
       await api.get<ApiResponse<{ courses: Course[] }>>("/courses");
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Failed to fetch courses");
+    }
+
     return response.data.data.courses;
   } catch (error) {
     if (isAxiosError(error)) {
@@ -50,6 +56,10 @@ export const getCourseDetails = async (
     const response = await api.get<ApiResponse<{ course: CourseWithUser }>>(
       `/courses/${courseId}`,
     );
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Failed to fetch course");
+    }
 
     return response.data.data.course;
   } catch (error) {
