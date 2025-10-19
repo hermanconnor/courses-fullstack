@@ -43,7 +43,7 @@ const CourseDetails = () => {
   const handleDelete = () => {
     console.log("course deleted");
 
-    navigate(`/courses`);
+    navigate("/");
   };
 
   return (
@@ -102,18 +102,10 @@ const CourseDetails = () => {
                     variant="outline"
                     className="w-full cursor-pointer bg-transparent"
                   >
-                    <Edit className="mr-2 h-4 w-4" />
+                    <Edit className="mr-2 size-4" />
                     Edit Course
                   </Button>
                 </Link>
-
-                {/* <Button
-                variant='destructive'
-                className='w-full cursor-pointer'
-                size='lg'
-              >
-                Delete Course
-              </Button> */}
 
                 <DeleteDialog isPending={isPending} onDelete={handleDelete} />
               </CardContent>

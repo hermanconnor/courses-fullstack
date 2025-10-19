@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FormField from "@/components/form/form-field";
 import FormTextArea from "@/components/form/form-textarea";
 import { courseSchema, type CourseFormData } from "@/lib/validation-schemas";
+import { createCourse } from "@/api";
 import { useAuth } from "@/providers/auth-provider";
 
 const CreateCourse = () => {
@@ -22,21 +23,31 @@ const CreateCourse = () => {
   const { authUser } = useAuth();
 
   if (!authUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/sign-in" replace />;
   }
 
   const { id } = authUser;
 
   const onSubmit = async (data: CourseFormData) => {
-    console.log(`course by user with id: ${id} creaded`);
-    console.log(data);
+    try {
+      const courseData: CourseFormData & { userId: number } = {
+        ...data,
+        userId: id,
+      };
+
+      await createCourse(courseData);
+
+      navigate("/");
+    } catch (error) {
+      console.error("Error creating course:", error);
+    }
   };
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       {/* Navigation */}
       <div className="flex items-center gap-4">
-        <Link to="/courses">
+        <Link to="/">
           <Button
             variant="ghost"
             size="sm"

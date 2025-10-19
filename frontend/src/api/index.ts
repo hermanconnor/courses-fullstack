@@ -1,7 +1,7 @@
 import type { Course, User } from "@/lib/types";
 import { api } from "./axiosConfig";
 import { AxiosError, isAxiosError } from "axios";
-// import type { CourseFormData } from "@/lib/validation-schemas";
+import type { CourseFormData } from "@/lib/validation-schemas";
 
 interface ApiResponse<T> {
   data: T;
@@ -86,6 +86,48 @@ export const getCourseDetails = async (
       throw new Error(
         "An unexpected error occurred while fetching course details",
       );
+    }
+  }
+};
+
+export const createCourse = async (data: CourseFormData): Promise<Course> => {
+  try {
+    const response = await api.post<ApiResponse<{ course: Course }>>(
+      "/courses",
+      data,
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Failed to create course");
+    }
+
+    return response.data.data.course;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiError>;
+
+      if (axiosError.response) {
+        const status = axiosError.response.status;
+        const errorData = axiosError.response.data;
+
+        if (status === 400) {
+          throw new Error(errorData?.message || "Invalid course data provided");
+        } else if (status === 401) {
+          throw new Error(
+            "Authentication required: Please log in to create a course",
+          );
+        } else {
+          const errorMessage = errorData?.message || "Failed to create course";
+          throw new Error(`API Error (${status}): ${errorMessage}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error("Network error");
+      } else {
+        throw new Error("Request error: " + axiosError.message);
+      }
+    } else {
+      console.error("Unexpected error creating course:", error);
+      throw new Error("An unexpected error occurred while creating the course");
     }
   }
 };
