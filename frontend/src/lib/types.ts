@@ -27,3 +27,13 @@ export interface Course {
   materialsNeeded?: string;
   userId: number;
 }
+
+export interface CourseDetails {
+  id: number;
+  title: string;
+  description: string;
+  estimatedTime?: string;
+  materialsNeeded?: string;
+  userId: number;
+  user: User;
+}

@@ -1,4 +1,4 @@
-import type { Course } from "@/lib/types";
+import type { Course, User } from "@/lib/types";
 import { api } from "./axiosConfig";
 import { AxiosError, isAxiosError } from "axios";
 
@@ -35,6 +35,47 @@ export const getCourses = async () => {
       }
     } else {
       throw new Error("An unexpected error occurred while fetching courses");
+    }
+  }
+};
+
+interface CourseWithUser extends Course {
+  user: User;
+}
+
+export const getCourseDetails = async (
+  courseId: number,
+): Promise<CourseWithUser> => {
+  try {
+    const response = await api.get<ApiResponse<{ course: CourseWithUser }>>(
+      `/courses/${courseId}`,
+    );
+
+    return response.data.data.course;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiError>;
+
+      if (axiosError.response) {
+        const status = axiosError.response.status;
+        const errorMessage =
+          axiosError.response.data?.message || "Failed to fetch course details";
+
+        if (status === 404) {
+          throw new Error(`Course with ID ${courseId} not found`);
+        } else {
+          throw new Error(`API Error (${status}): ${errorMessage}`);
+        }
+      } else if (axiosError.request) {
+        throw new Error("Network error");
+      } else {
+        throw new Error("Request error: " + axiosError.message);
+      }
+    } else {
+      console.error("Unexpected error fetching course details:", error);
+      throw new Error(
+        "An unexpected error occurred while fetching course details",
+      );
     }
   }
 };

@@ -1,9 +1,9 @@
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 
+import CourseCard from "@/components/course-card";
 import useCourses from "@/hooks/useCourses";
 import { useAuth } from "@/providers/auth-provider";
-import CourseCard from "@/components/course-card";
 
 const HomePage = () => {
   const { courses, isLoading, error } = useCourses();
