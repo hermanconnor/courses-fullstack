@@ -26,3 +26,12 @@ export const signInSchema = z.object({
 });
 
 export type SignInFormData = z.infer<typeof signInSchema>;
+
+export const courseSchema = z.object({
+  title: z.string().min(1, "Please enter a course title").trim(),
+  description: z.string().min(1, "A course description is required").trim(),
+  estimatedTime: z.string().trim().optional(),
+  materialsNeeded: z.string().trim().optional(),
+});
+
+export type CourseFormData = z.infer<typeof courseSchema>;
