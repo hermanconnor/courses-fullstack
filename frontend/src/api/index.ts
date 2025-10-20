@@ -200,3 +200,48 @@ export const editCourse = async ({
     }
   }
 };
+
+interface DeleteCoursePayload {
+  id: number;
+  emailAddress: string;
+  password: string;
+}
+
+export const deleteCourse = async ({
+  id,
+  emailAddress,
+  password,
+}: DeleteCoursePayload) => {
+  const encodedCredentials = btoa(`${emailAddress}:${password}`);
+
+  try {
+    const response = await api.delete(`/courses/${id}`, {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        Authorization: `Basic ${encodedCredentials}`,
+      },
+    });
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Failed to delete course");
+    }
+
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiError>;
+
+      if (axiosError.response) {
+        const errorMessage =
+          axiosError.response.data?.message || "Failed to delete course";
+        throw new Error(`API Error: ${errorMessage}`);
+      } else if (axiosError.request) {
+        throw new Error("Network error");
+      } else {
+        throw new Error("Request error: " + axiosError.message);
+      }
+    } else {
+      throw new Error("An unexpected error occurred");
+    }
+  }
+};

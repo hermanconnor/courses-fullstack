@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { Clock, User, Edit } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -7,17 +8,16 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import DeleteDialog from "@/components/delete-dialog";
 import useCourseDetails from "@/hooks/useCourseDetails";
 import { useAuth } from "@/providers/auth-provider";
+import { deleteCourse } from "@/api";
 
 const CourseDetails = () => {
+  const [isPending, setIsPending] = useState<boolean>(false);
+
   const { id } = useParams<{ id: string }>();
   const courseId = Number(id);
   const navigate = useNavigate();
 
-  // ** DELETE ***
-  const isPending = false;
-  // ** **********
-
-  const { authUser } = useAuth();
+  const { authUser, credentials } = useAuth();
   const { course, isLoading, error } = useCourseDetails(courseId);
 
   if (isLoading) {
@@ -40,10 +40,23 @@ const CourseDetails = () => {
     );
   }
 
-  const handleDelete = () => {
-    console.log("course deleted");
+  const handleDelete = async () => {
+    if (!credentials) return;
 
-    navigate("/");
+    try {
+      setIsPending(true);
+      await deleteCourse({
+        id: courseId,
+        emailAddress: credentials.emailAddress,
+        password: credentials.password,
+      });
+
+      navigate("/");
+    } catch (error) {
+      console.error("Error deleting course:", error);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (
