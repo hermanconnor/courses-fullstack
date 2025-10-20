@@ -1,4 +1,5 @@
-import { Link, Navigate, useNavigate } from "react-router";
+import { useEffect } from "react";
+import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,40 +8,72 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FormField from "@/components/form/form-field";
 import FormTextArea from "@/components/form/form-textarea";
-import { courseSchema, type CourseFormData } from "@/lib/validation-schemas";
-import { createCourse } from "@/api";
+import useCourseDetails from "@/hooks/useCourseDetails";
+import {
+  editCourseSchema,
+  type EditCourseData,
+} from "@/lib/validation-schemas";
 import { useAuth } from "@/providers/auth-provider";
+import { editCourse } from "@/api";
 
-const CreateCourse = () => {
+const EditCourse = () => {
   const navigate = useNavigate();
+  const params = useParams<{ id: string }>();
+  const courseId = Number(params.id);
+
+  const { authUser, credentials } = useAuth();
+  const { course, isLoading, error } = useCourseDetails(courseId);
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
-  } = useForm<CourseFormData>({ resolver: zodResolver(courseSchema) });
+  } = useForm<EditCourseData>({
+    resolver: zodResolver(editCourseSchema),
+  });
 
-  const { authUser, credentials } = useAuth();
+  useEffect(() => {
+    if (course) {
+      reset(course);
+    }
+  }, [course, reset]);
+
+  if (isLoading) {
+    return <div className="wrap main--grid">Loading course details...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="wrap main--grid error">
+        Error: {error || "Failed to load course details."}
+      </div>
+    );
+  }
 
   if (!authUser || !credentials) {
     return <Navigate to="/sign-in" replace />;
   }
-
   const { id } = authUser;
   const { emailAddress, password } = credentials;
 
-  const onSubmit = async (data: CourseFormData) => {
+  const onSubmit = async (data: EditCourseData) => {
     try {
-      const courseData: CourseFormData & { userId: number } = {
+      const courseData: EditCourseData & { userId: number } = {
         ...data,
         userId: id,
       };
 
-      await createCourse({ data: courseData, emailAddress, password });
+      await editCourse({
+        id: courseId,
+        data: courseData,
+        emailAddress,
+        password,
+      });
 
-      navigate("/");
+      navigate(`/courses/${courseId}`);
     } catch (error) {
-      console.error("Error creating course:", error);
+      console.error("Error updating course:", error);
     }
   };
 
@@ -54,7 +87,7 @@ const CreateCourse = () => {
             size="sm"
             className="cursor-pointer transition-colors hover:text-blue-600"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft className="mr-2 size-4" />
             Back to Courses
           </Button>
         </Link>
@@ -62,10 +95,8 @@ const CreateCourse = () => {
 
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Create New Course</h1>
-        <p className="mt-1 text-gray-600">
-          Fill in the details to create a new course
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900">Edit Course</h1>
+        <p className="mt-1 text-gray-600">Edit course details</p>
       </div>
 
       {/* Form */}
@@ -117,12 +148,12 @@ const CreateCourse = () => {
                 disabled={isSubmitting}
                 className="flex-1 cursor-pointer sm:flex-none"
               >
-                {isSubmitting ? "Creating Course..." : "Create Course"}
+                {isSubmitting ? "Updating Course..." : "Update Course"}
               </Button>
-              <Link to="/courses">
+              <Link to={`/courses/${courseId}`}>
                 <Button
-                  type="button"
                   variant="outline"
+                  type="button"
                   className="cursor-pointer"
                 >
                   Cancel
@@ -136,4 +167,4 @@ const CreateCourse = () => {
   );
 };
 
-export default CreateCourse;
+export default EditCourse;

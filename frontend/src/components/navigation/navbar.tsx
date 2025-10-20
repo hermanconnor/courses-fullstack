@@ -65,7 +65,7 @@ const Navbar = () => {
                   className="cursor-pointer"
                   onClick={() => {
                     signOut();
-                    navigate("/sign-in");
+                    navigate("/sign-in", { replace: true });
                   }}
                 >
                   <LogOut className="mr-1 size-4" />

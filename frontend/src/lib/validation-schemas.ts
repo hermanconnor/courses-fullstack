@@ -1,15 +1,12 @@
 import { z } from "zod";
 
+// SIGN UP
 export const signupSchema = z
   .object({
     firstName: z.string().min(1, "First name is required").trim(),
-
     lastName: z.string().min(1, "Last name is required").trim(),
-
     emailAddress: z.string().min(1, "Email is required").email().trim(),
-
     password: z.string().min(1, "Password is required").trim(),
-
     confirmPassword: z.string().min(1, "Required").trim(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -19,14 +16,15 @@ export const signupSchema = z
 
 export type SignUpFormData = z.infer<typeof signupSchema>;
 
+// SIGN IN
 export const signInSchema = z.object({
   emailAddress: z.email().min(1, "Email is required").trim(),
-
   password: z.string().min(1, "Password is required").trim(),
 });
 
 export type SignInFormData = z.infer<typeof signInSchema>;
 
+// CREATE COURSE
 export const courseSchema = z.object({
   title: z.string().min(1, "Please enter a course title").trim(),
   description: z.string().min(1, "A course description is required").trim(),
@@ -35,3 +33,7 @@ export const courseSchema = z.object({
 });
 
 export type CourseFormData = z.infer<typeof courseSchema>;
+
+// EDIT COURSE
+export const editCourseSchema = courseSchema.partial();
+export type EditCourseData = z.infer<typeof editCourseSchema>;

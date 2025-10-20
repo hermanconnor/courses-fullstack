@@ -1,7 +1,7 @@
 import type { Course, User } from "@/lib/types";
 import { api } from "./axiosConfig";
 import { AxiosError, isAxiosError } from "axios";
-import type { CourseFormData } from "@/lib/validation-schemas";
+import type { CourseFormData, EditCourseData } from "@/lib/validation-schemas";
 
 interface ApiResponse<T> {
   data: T;
@@ -90,11 +90,29 @@ export const getCourseDetails = async (
   }
 };
 
-export const createCourse = async (data: CourseFormData): Promise<Course> => {
+interface CreateCoursePayload {
+  data: CourseFormData;
+  emailAddress: string;
+  password: string;
+}
+
+export const createCourse = async ({
+  data,
+  emailAddress,
+  password,
+}: CreateCoursePayload): Promise<Course> => {
+  const encodedCredentials = btoa(`${emailAddress}:${password}`);
+
   try {
     const response = await api.post<ApiResponse<{ course: Course }>>(
       "/courses",
       data,
+      {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          Authorization: `Basic ${encodedCredentials}`,
+        },
+      },
     );
 
     if (!response.data.success) {
@@ -128,6 +146,57 @@ export const createCourse = async (data: CourseFormData): Promise<Course> => {
     } else {
       console.error("Unexpected error creating course:", error);
       throw new Error("An unexpected error occurred while creating the course");
+    }
+  }
+};
+
+interface EditCoursePayload {
+  id: number;
+  data: EditCourseData;
+  emailAddress: string;
+  password: string;
+}
+
+export const editCourse = async ({
+  id,
+  data,
+  emailAddress,
+  password,
+}: EditCoursePayload) => {
+  const encodedCredentials = btoa(`${emailAddress}:${password}`);
+
+  try {
+    const response = await api.put<ApiResponse<{ course: Course }>>(
+      `/courses/${id}`,
+      data,
+      {
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          Authorization: `Basic ${encodedCredentials}`,
+        },
+      },
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Failed to edit course");
+    }
+
+    return response.data.data.course;
+  } catch (error) {
+    if (isAxiosError(error)) {
+      const axiosError = error as AxiosError<ApiError>;
+
+      if (axiosError.response) {
+        const errorMessage =
+          axiosError.response.data?.message || "Failed to edit course";
+        throw new Error(`API Error: ${errorMessage}`);
+      } else if (axiosError.request) {
+        throw new Error("Network error");
+      } else {
+        throw new Error("Request error: " + axiosError.message);
+      }
+    } else {
+      throw new Error("An unexpected error occurred");
     }
   }
 };
