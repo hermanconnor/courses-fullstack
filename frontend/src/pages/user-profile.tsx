@@ -1,7 +1,12 @@
+import { Navigate } from "react-router";
 import { useAuth } from "@/providers/auth-provider";
 
 const UserProfile = () => {
   const { authUser } = useAuth();
+
+  if (!authUser) {
+    return <Navigate to="/sign-in" replace />;
+  }
 
   const firstName = authUser && authUser.firstName;
   const lastName = authUser && authUser.lastName;
