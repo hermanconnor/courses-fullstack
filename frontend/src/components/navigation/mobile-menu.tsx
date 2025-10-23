@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link, NavLink } from "react-router";
-import { BookOpen, Menu } from "lucide-react";
+import { Link, NavLink, useNavigate } from "react-router";
+import { BookOpen, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -11,9 +11,13 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/providers/auth-provider";
 
 const MobileMenu = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
+
+  const navigate = useNavigate();
+  const { authUser, signOut } = useAuth();
 
   const handleLinkClick = () => {
     setIsOpen(false);
@@ -54,28 +58,71 @@ const MobileMenu = () => {
             Courses
           </NavLink>
 
+          {authUser && authUser.id ? (
+            <NavLink
+              end
+              to="/courses/create"
+              className={({ isActive }) =>
+                cn(isActive ? activeStyles : baseStyles, defaultStyles)
+              }
+              onClick={handleLinkClick}
+            >
+              Create Course
+            </NavLink>
+          ) : null}
+
           <Separator className="my-3" />
 
           <div className="flex flex-col space-y-4 pl-1">
-            <NavLink
-              to="/sign-in"
-              className={({ isActive }) =>
-                cn(isActive ? activeStyles : baseStyles, defaultStyles)
-              }
-              onClick={handleLinkClick}
-            >
-              Sign In
-            </NavLink>
+            {authUser && authUser.id ? (
+              <>
+                <NavLink
+                  to="user-profile"
+                  className={({ isActive }) =>
+                    cn(isActive ? activeStyles : baseStyles, defaultStyles)
+                  }
+                  onClick={handleLinkClick}
+                >
+                  Profile
+                </NavLink>
 
-            <NavLink
-              to="/sign-up"
-              className={({ isActive }) =>
-                cn(isActive ? activeStyles : baseStyles, defaultStyles)
-              }
-              onClick={handleLinkClick}
-            >
-              Sign Up
-            </NavLink>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="cursor-pointer"
+                  onClick={() => {
+                    signOut();
+                    handleLinkClick();
+                    navigate("/sign-in", { replace: true });
+                  }}
+                >
+                  <LogOut className="mr-1 size-4" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <NavLink
+                  to="/sign-in"
+                  className={({ isActive }) =>
+                    cn(isActive ? activeStyles : baseStyles, defaultStyles)
+                  }
+                  onClick={handleLinkClick}
+                >
+                  Sign In
+                </NavLink>
+
+                <NavLink
+                  to="/sign-up"
+                  className={({ isActive }) =>
+                    cn(isActive ? activeStyles : baseStyles, defaultStyles)
+                  }
+                  onClick={handleLinkClick}
+                >
+                  Sign Up
+                </NavLink>
+              </>
+            )}
           </div>
         </div>
       </SheetContent>
