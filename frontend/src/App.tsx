@@ -1,4 +1,5 @@
-import { Routes, Route } from "react-router";
+import { createBrowserRouter, RouterProvider } from "react-router";
+
 import RootLayout from "@/layouts/root-layout";
 import HomePage from "@/pages/home-page";
 import CoursesPage from "@/pages/courses";
@@ -11,30 +12,66 @@ import UserProfile from "@/pages/user-profile";
 import UserLoggedIn from "@/components/user-logged-in";
 import ProtectedRoute from "@/components/protected-route";
 import NotFound from "@/components/not-found";
+import ErrorPage from "@/components/error-page";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <RootLayout />,
+    errorElement: <ErrorPage />,
+    children: [
+      {
+        index: true,
+        element: <HomePage />,
+      },
+      {
+        path: "courses",
+        element: <CoursesPage />,
+      },
+      {
+        path: "courses/:id",
+        element: <CourseDetails />,
+      },
+      {
+        element: <ProtectedRoute />,
+        children: [
+          {
+            path: "courses/create",
+            element: <CreateCourse />,
+          },
+          {
+            path: "courses/:id/edit",
+            element: <EditCourse />,
+          },
+          {
+            path: "user-profile",
+            element: <UserProfile />,
+          },
+        ],
+      },
+      {
+        element: <UserLoggedIn />,
+        children: [
+          {
+            path: "sign-up",
+            element: <SignUp />,
+          },
+          {
+            path: "sign-in",
+            element: <SignIn />,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: "*",
+    element: <NotFound />,
+  },
+]);
 
 function App() {
-  return (
-    <Routes>
-      <Route element={<RootLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="/courses" element={<CoursesPage />} />
-        <Route path="/courses/:id" element={<CourseDetails />} />
-
-        <Route element={<ProtectedRoute />}>
-          <Route path="/courses/create" element={<CreateCourse />} />
-          <Route path="/courses/:id/edit" element={<EditCourse />} />
-          <Route path="/user-profile" element={<UserProfile />} />
-        </Route>
-
-        <Route element={<UserLoggedIn />}>
-          <Route path="/sign-up" element={<SignUp />} />
-          <Route path="/sign-in" element={<SignIn />} />
-        </Route>
-      </Route>
-
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
+  return <RouterProvider router={router} />;
 }
 
 export default App;

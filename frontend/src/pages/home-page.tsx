@@ -24,7 +24,7 @@ const HomePage = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Courses</h1>
           <p className="mt-1 text-gray-600">
-            Discover and enroll in our comprehensive courses
+            Discover our comprehensive courses
           </p>
         </div>
         {authUser && authUser.id ? (
