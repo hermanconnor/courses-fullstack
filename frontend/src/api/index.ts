@@ -1,47 +1,20 @@
-import type { Course, User } from "@/lib/types";
+import { isAxiosError } from "axios";
 import { api } from "./axiosConfig";
-import { AxiosError, isAxiosError } from "axios";
 import type { CourseFormData, EditCourseData } from "@/lib/validation-schemas";
-
-interface ApiResponse<T> {
-  data: T;
-  message?: string;
-  success: boolean;
-}
-
-interface ApiError {
-  message: string;
-  code?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  errors?: any;
-}
+import type { ApiResponse, Course, User } from "@/lib/types";
+import { validateResponse } from "@/utils/validateResponse";
+import { handleApiError } from "@/utils/handleApiError";
+import { createAuthHeaders } from "@/utils/createAuthHeaders";
 
 export const getCourses = async () => {
   try {
     const response =
       await api.get<ApiResponse<{ courses: Course[] }>>("/courses");
+    const data = validateResponse(response.data, "Failed to fetch courses");
 
-    if (!response.data.success) {
-      throw new Error(response.data.message || "Failed to fetch courses");
-    }
-
-    return response.data.data.courses;
+    return data.courses;
   } catch (error) {
-    if (isAxiosError(error)) {
-      const axiosError = error as AxiosError<ApiError>;
-
-      if (axiosError.response) {
-        const errorMessage =
-          axiosError.response.data?.message || "Failed to fetch courses";
-        throw new Error(`API Error: ${errorMessage}`);
-      } else if (axiosError.request) {
-        throw new Error("Network error");
-      } else {
-        throw new Error("Request error: " + axiosError.message);
-      }
-    } else {
-      throw new Error("An unexpected error occurred while fetching courses");
-    }
+    handleApiError(error, "fetch courses");
   }
 };
 
@@ -56,37 +29,16 @@ export const getCourseDetails = async (
     const response = await api.get<ApiResponse<{ course: CourseWithUser }>>(
       `/courses/${courseId}`,
     );
+    const data = validateResponse(response.data, "Failed to fetch course");
 
-    if (!response.data.success) {
-      throw new Error(response.data.message || "Failed to fetch course");
-    }
-
-    return response.data.data.course;
+    return data.course;
   } catch (error) {
-    if (isAxiosError(error)) {
-      const axiosError = error as AxiosError<ApiError>;
-
-      if (axiosError.response) {
-        const status = axiosError.response.status;
-        const errorMessage =
-          axiosError.response.data?.message || "Failed to fetch course details";
-
-        if (status === 404) {
-          throw new Error(`Course with ID ${courseId} not found`);
-        } else {
-          throw new Error(`API Error (${status}): ${errorMessage}`);
-        }
-      } else if (axiosError.request) {
-        throw new Error("Network error");
-      } else {
-        throw new Error("Request error: " + axiosError.message);
-      }
-    } else {
-      console.error("Unexpected error fetching course details:", error);
-      throw new Error(
-        "An unexpected error occurred while fetching course details",
-      );
+    // Special handling for 404
+    if (isAxiosError(error) && error.response?.status === 404) {
+      throw new Error(`Course with ID ${courseId} not found`);
     }
+
+    return handleApiError(error, "fetch course details");
   }
 };
 
@@ -101,52 +53,34 @@ export const createCourse = async ({
   emailAddress,
   password,
 }: CreateCoursePayload): Promise<Course> => {
-  const encodedCredentials = btoa(`${emailAddress}:${password}`);
-
   try {
     const response = await api.post<ApiResponse<{ course: Course }>>(
       "/courses",
       data,
-      {
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          Authorization: `Basic ${encodedCredentials}`,
-        },
-      },
+      { headers: createAuthHeaders(emailAddress, password) },
+    );
+    const responseData = validateResponse(
+      response.data,
+      "Failed to create course",
     );
 
-    if (!response.data.success) {
-      throw new Error(response.data.message || "Failed to create course");
-    }
-
-    return response.data.data.course;
+    return responseData.course;
   } catch (error) {
+    // Special handling for 401 and 400
     if (isAxiosError(error)) {
-      const axiosError = error as AxiosError<ApiError>;
-
-      if (axiosError.response) {
-        const status = axiosError.response.status;
-        const errorData = axiosError.response.data;
-
-        if (status === 400) {
-          throw new Error(errorData?.message || "Invalid course data provided");
-        } else if (status === 401) {
-          throw new Error(
-            "Authentication required: Please log in to create a course",
-          );
-        } else {
-          const errorMessage = errorData?.message || "Failed to create course";
-          throw new Error(`API Error (${status}): ${errorMessage}`);
-        }
-      } else if (axiosError.request) {
-        throw new Error("Network error");
-      } else {
-        throw new Error("Request error: " + axiosError.message);
+      const status = error.response?.status;
+      if (status === 401) {
+        throw new Error(
+          "Authentication required: Please log in to create a course",
+        );
+      } else if (status === 400) {
+        throw new Error(
+          error.response?.data?.message || "Invalid course data provided",
+        );
       }
-    } else {
-      console.error("Unexpected error creating course:", error);
-      throw new Error("An unexpected error occurred while creating the course");
     }
+
+    return handleApiError(error, "create course");
   }
 };
 
@@ -163,41 +97,20 @@ export const editCourse = async ({
   emailAddress,
   password,
 }: EditCoursePayload) => {
-  const encodedCredentials = btoa(`${emailAddress}:${password}`);
-
   try {
     const response = await api.put<ApiResponse<{ course: Course }>>(
       `/courses/${id}`,
       data,
-      {
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          Authorization: `Basic ${encodedCredentials}`,
-        },
-      },
+      { headers: createAuthHeaders(emailAddress, password) },
+    );
+    const responseData = validateResponse(
+      response.data,
+      "Failed to edit course",
     );
 
-    if (!response.data.success) {
-      throw new Error(response.data.message || "Failed to edit course");
-    }
-
-    return response.data.data.course;
+    return responseData.course;
   } catch (error) {
-    if (isAxiosError(error)) {
-      const axiosError = error as AxiosError<ApiError>;
-
-      if (axiosError.response) {
-        const errorMessage =
-          axiosError.response.data?.message || "Failed to edit course";
-        throw new Error(`API Error: ${errorMessage}`);
-      } else if (axiosError.request) {
-        throw new Error("Network error");
-      } else {
-        throw new Error("Request error: " + axiosError.message);
-      }
-    } else {
-      throw new Error("An unexpected error occurred");
-    }
+    handleApiError(error, "edit course");
   }
 };
 
@@ -212,36 +125,13 @@ export const deleteCourse = async ({
   emailAddress,
   password,
 }: DeleteCoursePayload) => {
-  const encodedCredentials = btoa(`${emailAddress}:${password}`);
-
   try {
     const response = await api.delete(`/courses/${id}`, {
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        Authorization: `Basic ${encodedCredentials}`,
-      },
+      headers: createAuthHeaders(emailAddress, password),
     });
 
-    if (!response.data.success) {
-      throw new Error(response.data.message || "Failed to delete course");
-    }
-
-    return response.data;
+    return validateResponse(response.data, "Failed to delete course");
   } catch (error) {
-    if (isAxiosError(error)) {
-      const axiosError = error as AxiosError<ApiError>;
-
-      if (axiosError.response) {
-        const errorMessage =
-          axiosError.response.data?.message || "Failed to delete course";
-        throw new Error(`API Error: ${errorMessage}`);
-      } else if (axiosError.request) {
-        throw new Error("Network error");
-      } else {
-        throw new Error("Request error: " + axiosError.message);
-      }
-    } else {
-      throw new Error("An unexpected error occurred");
-    }
+    handleApiError(error, "delete course");
   }
 };

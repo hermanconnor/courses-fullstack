@@ -37,3 +37,16 @@ export interface CourseDetails {
   userId: number;
   user: User;
 }
+
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  success: boolean;
+}
+
+export interface ApiError {
+  message: string;
+  code?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  errors?: any;
+}
