@@ -51,30 +51,6 @@ A simple yet modern RESTful API for managing users and courses, originally built
 | `PUT`    | `/courses/:id` | Update a course (owner only)    |
 | `DELETE` | `/courses/:id` | Delete a course (owner only)    |
 
-## 🛠️ Setup Instructions
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
-
-# 2. Install dependencies
-npm install
-
-# 3. Initialize the database
-npm run db:generate
-# followed by
-npm run db:migrate
-
-# Or
-npx drizzle-kit push
-
-# 4. Start the dev server
-npm dev
-```
-
-> ⚠️ Make sure to configure your `.env` if needed for DB settings or secrets.
-
 ## 🧪 Validation
 
 - Input schemas for both `User` and `Course` are defined using Zod.
