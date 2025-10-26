@@ -5,9 +5,9 @@ This version is a **complete rebuild from scratch**, keeping the project mostly 
 
 ## 📷 Screenshots
 
-![Courses Frontend](./src//assets/image-1.webp)
-![Courses Frontend](./src//assets/image-3.webp)
-![Courses Frontend](./src//assets/image-5.webp)
+![Courses Frontend](./frontend/src/assets/image-1.webp)
+![Courses Frontend](./frontend/src/assets/image-3.webp)
+![Courses Frontend](./frontend/src/assets/image-5.webp)
 
 ## ✨ Tech Stack
 
@@ -23,15 +23,18 @@ This version is a **complete rebuild from scratch**, keeping the project mostly 
 ## 🧠 Features
 
 - 👤 **User Authentication**
+
   - Sign up and sign in using Basic Auth (username/password)
   - Authenticated routes and protected actions
 
 - 📘 **Course Management**
+
   - View all available courses
   - View course details with Markdown-rendered descriptions
   - Create, update, and delete courses (if you are the owner)
 
 - 💅 **Modern UI/UX**
+
   - Built with TailwindCSS and Shadcn/UI for elegant, responsive design
   - Reusable UI components and accessible forms
 
